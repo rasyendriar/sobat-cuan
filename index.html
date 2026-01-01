@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- PWA & Mobile Settings -->
+    <title>CuanKeeper - Sobat Dongblang</title>
+    <meta name="description" content="Aplikasi pencatat keuangan Gen-Z yang simpel dan estetik.">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CuanKeeper">
+
+    <!-- Icons -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/3d-fluency/512/money-bag.png">
+
+    <!-- Web Manifest (Data URI for Single File PWA) -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Sobat Dongblang Ultimate","short_name":"CuanKeeper","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://img.icons8.com/3d-fluency/512/money-bag.png","sizes":"512x512","type":"image/png"}]}'>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* THEME VARIABLES DEFINITION */
+        :root {
+            /* Default (Emo/Dark) */
+            --bg-color: #0f172a;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --accent-gradient: linear-gradient(to right, #60a5fa, #a855f7);
+            --nav-bg: rgba(15, 23, 42, 0.95);
+            --bar-color: #38bdf8;
+            --modal-bg: #1e293b;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        /* Cewe Kue (Pastel/Bright) */
+        body.theme-kue {
+            --bg-color: #fff1f2;
+            --text-main: #4c0519;
+            --text-muted: #9d174d;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(251, 113, 133, 0.3);
+            --accent-gradient: linear-gradient(to right, #f472b6, #fbbf24);
+            --nav-bg: rgba(255, 241, 242, 0.95);
+            --bar-color: #f472b6;
+            --modal-bg: #fff0f5;
+        }
+
+        /* Cewe Bumi (Earth/Calm) */
+        body.theme-bumi {
+            --bg-color: #f0fdf4;
+            --text-main: #14532d;
+            --text-muted: #3f6212;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(132, 204, 22, 0.3);
+            --accent-gradient: linear-gradient(to right, #4ade80, #a16207);
+            --nav-bg: rgba(240, 253, 244, 0.95);
+            --bar-color: #84cc16;
+            --modal-bg: #ecfccb;
+        }
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            -webkit-tap-highlight-color: transparent;
+            overflow-y: auto; 
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+            user-select: none; /* App-like feel */
+        }
+
+        /* Glassmorphism Dynamic */
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            transition: background 0.5s, border 0.5s;
+        }
+
+        .text-gradient {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; opacity: 0.3; }
+
+        /* Animations */
+        @keyframes pop { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .pop-in { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes flame { 0% { transform: scale(1); } 50% { transform: scale(1.1); filter: brightness(1.2); } 100% { transform: scale(1); } }
+        .streak-fire { animation: flame 1.5s infinite ease-in-out; display: inline-block; }
+
+        /* Pie Chart & Budget Ring */
+        .pie-chart { width: 140px; height: 140px; border-radius: 50%; position: relative; z-index: 1; }
+        .pie-chart::after { content: ""; position: absolute; inset: 15px; background: var(--bg-color); border-radius: 50%; z-index: 2; transition: background 0.5s; }
+        .pie-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3; text-align: center; }
+
+        /* Budget Ring Specifics */
+        .budget-ring { width: 70px; height: 70px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; background: conic-gradient(var(--bar-color) 0%, rgba(255,255,255,0.1) 0%); }
+        .budget-ring::after { content: ""; position: absolute; inset: 6px; background: var(--card-bg); border-radius: 50%; }
+        .budget-content { position: relative; z-index: 2; text-align: center; font-size: 10px; font-weight: bold; line-height: 1.1; }
+
+        /* Bar Chart */
+        .bar-container { display: flex; align-items: flex-end; justify-content: space-between; height: 180px; width: 100%; padding-top: 20px; }
+        .bar { width: 12%; background: var(--accent-gradient); border-radius: 4px 4px 0 0; transition: height 0.5s ease; min-height: 4px; position: relative; }
+        .bar:hover::after { content: attr(data-amount); position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 10px; background: var(--text-main); color: var(--bg-color); padding: 2px 4px; border-radius: 4px; white-space: nowrap; z-index: 10; font-weight: bold; }
+
+        .nav-btn.active { color: var(--bar-color); transform: scale(1.1); font-weight: 800; }
+        .hidden-view { display: none; }
+        
+        .category-radio:checked + div {
+            border-color: var(--bar-color);
+            background: rgba(125, 211, 252, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* XP Bar */
+        .xp-container { width: 100%; height: 6px; background: rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; margin-top: 4px; }
+        .xp-bar { height: 100%; background: var(--accent-gradient); width: 0%; transition: width 1s ease-out; }
+        
+        input[type="date"] { color-scheme: dark; }
+        body.theme-kue input[type="date"], body.theme-bumi input[type="date"] { color-scheme: light; }
+    </style>
+</head>
+<body class="theme-emo min-h-screen pb-24 relative transition-colors duration-500">
+
+    <!-- Background Accents -->
+    <div class="fixed top-[-100px] left-[-100px] w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+    <div class="fixed top-[-100px] right-[-100px] w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+    
+    <!-- App Container -->
+    <div id="app" class="max-w-md mx-auto relative z-10 min-h-screen flex flex-col">
+        
+        <!-- Header -->
+        <header class="p-6 flex justify-between items-start sticky top-0 z-40 backdrop-blur-sm" style="background: var(--nav-bg); border-bottom: 1px solid var(--card-border);">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                    <p id="greeting" class="text-xs font-medium opacity-70">Good Morning,</p>
+                    <div id="streak-badge" class="hidden px-2 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/50 flex items-center gap-1">
+                        <span class="text-sm streak-fire">🔥</span>
+                        <span id="streak-count" class="text-[10px] font-bold text-orange-400">0 Days</span>
+                    </div>
+                </div>
+                <h1 id="user-name-display" class="text-xl font-bold text-gradient cursor-pointer">
+                    Sobat Dongblang ✨
+                </h1>
+                <!-- Gamification -->
+                <div class="flex items-center gap-2 max-w-[180px] mt-1">
+                    <span id="user-level-badge" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500 text-white shadow-sm">Lvl 1</span>
+                    <div class="flex-1">
+                        <div class="xp-container">
+                            <div id="xp-progress" class="xp-bar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Settings Moved to Header -->
+            <div onclick="openSettings()" class="w-10 h-10 rounded-full glass flex items-center justify-center cursor-pointer hover:scale-105 transition active:scale-95 shadow-lg relative">
+                <span class="text-lg">⚙️</span>
+            </div>
+        </header>
+
+        <!-- VIEW: HOME -->
+        <main id="view-home" class="flex-1 px-6 space-y-5 pop-in py-4">
+            <!-- Balance & Budget Ring Row -->
+            <div class="glass rounded-3xl p-5 relative overflow-hidden shadow-lg flex items-center justify-between gap-4">
+                <div class="flex-1">
+                    <p class="text-xs opacity-70 mb-1" data-i18n="total_spent">Sisa Saldo (Cuan)</p>
+                    <h2 id="total-balance" class="text-3xl font-extrabold tracking-tight mb-2 text-gradient">Rp 0</h2>
+                    <div id="monthly-status-badge" class="inline-flex px-2 py-1 rounded-lg text-[10px] font-bold items-center gap-1 bg-black/10">
+                        <span>🛡️ Aman</span>
+                    </div>
+                </div>
+                <!-- Budget Ring -->
+                <div class="flex flex-col items-center">
+                    <div id="home-budget-ring" class="budget-ring">
+                        <div class="budget-content">
+                            <span id="budget-percent" class="text-lg font-bold">0%</span>
+                        </div>
+                    </div>
+                    <span class="text-[9px] mt-1 opacity-60 font-medium">Budget Used</span>
+                </div>
+            </div>
+
+            <!-- Motivation -->
+            <div class="glass rounded-xl p-3 flex items-center gap-3 border-l-4 border-l-purple-500 shadow-sm">
+                <div class="text-xl">💡</div>
+                <div class="overflow-hidden">
+                    <h4 class="font-bold text-xs text-gradient mb-0.5" data-i18n="daily_tip">Tips Dongblang</h4>
+                    <p id="motivation-text" class="text-[10px] opacity-70 italic truncate">Loading tips...</p>
+                </div>
+            </div>
+
+            <!-- Recent Transactions (Limited) -->
+            <div class="pb-4">
+                <div class="flex justify-between items-end mb-3">
+                    <h3 class="font-bold text-lg" data-i18n="recent_activity">Baru Terjadi</h3>
+                    <button onclick="switchTab('history')" class="text-xs text-blue-400 font-bold hover:underline">Lihat Semua ➜</button>
+                </div>
+                <div id="recent-transaction-list" class="space-y-3"></div>
+            </div>
+        </main>
+
+        <!-- VIEW: HISTORY (RIWAYAT) - NEW -->
+        <main id="view-history" class="hidden-view flex-1 px-6 space-y-4 pop-in py-4">
+            <h2 class="text-xl font-bold">Riwayat Transaksi 📜</h2>
+            
+            <!-- Search & Filter Bar (Moved Here) -->
+            <div class="sticky top-0 z-30 pb-2 bg-inherit backdrop-blur-xl -mx-2 px-2">
+                <div class="flex gap-2">
+                    <div class="glass flex-1 rounded-xl flex items-center px-3 py-2 gap-2">
+                        <span class="opacity-50">🔍</span>
+                        <input type="text" id="search-input" oninput="handleSearch()" placeholder="Cari kopi, cilok..." class="bg-transparent text-sm w-full focus:outline-none" style="color: var(--text-main);">
+                    </div>
+                    <div class="glass rounded-xl px-2 py-2 flex items-center">
+                        <input type="month" id="filter-month" onchange="handleSearch()" class="bg-transparent text-xs font-bold w-24 focus:outline-none border-none p-0 cursor-pointer" style="color: var(--text-main);">
+                    </div>
+                </div>
+            </div>
+
+            <div id="transaction-list" class="space-y-3 pb-20"></div>
+        </main>
+
+        <!-- VIEW: STATISTICS -->
+        <main id="view-stats" class="hidden-view flex-1 px-6 space-y-6 pop-in py-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Analisis 📊</h2>
+                <div class="glass p-1 rounded-lg flex text-[10px] font-bold">
+                    <button onclick="toggleChartType('bar')" id="btn-chart-bar" class="px-3 py-1.5 rounded-md bg-blue-500 text-white transition-all shadow">Harian</button>
+                    <button onclick="toggleChartType('pie')" id="btn-chart-pie" class="px-3 py-1.5 rounded-md opacity-60 hover:opacity-100 transition-all">Kategori</button>
+                </div>
+            </div>
+
+            <!-- Insight Gen-Z Block (NEW) -->
+            <div class="glass rounded-xl p-4 border border-purple-500/30 bg-purple-500/5 relative overflow-hidden">
+                <div class="absolute -right-2 -top-2 text-5xl opacity-10">🤖</div>
+                <h4 class="font-bold text-xs text-purple-400 mb-1">Dongblang AI Insight</h4>
+                <p id="ai-insight-text" class="text-xs font-medium leading-relaxed">Analisis data...</p>
+            </div>
+
+            <!-- Chart Container -->
+            <div class="glass rounded-3xl p-6 shadow-md min-h-[250px] flex flex-col justify-center items-center relative">
+                <div id="chart-view-bar" class="w-full">
+                    <h3 class="text-sm opacity-60 mb-4 absolute top-4 left-6">Pengeluaran 7 Hari Terakhir</h3>
+                    <div id="weekly-chart" class="bar-container"></div>
+                    <div id="weekly-days" class="flex justify-between mt-2 text-[10px] opacity-50 uppercase px-1"></div>
+                </div>
+                <div id="chart-view-pie" class="hidden w-full flex flex-col items-center">
+                    <h3 class="text-sm opacity-60 mb-4 absolute top-4 left-6">Top Pengeluaran</h3>
+                    <div id="expense-chart" class="pie-chart" style="background: conic-gradient(#3b82f6 0% 100%);"></div>
+                    <div class="pie-text">
+                        <span class="text-[10px] opacity-60">Dominan</span>
+                        <p id="top-category-name" class="text-xs font-bold truncate max-w-[80px]">---</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend / Breakdown with Category Budget -->
+            <div>
+                <h3 class="text-sm font-bold opacity-80 mb-3">Budget per Kategori (Tap to Edit)</h3>
+                <div id="stats-category-list" class="space-y-3 pb-20"></div>
+            </div>
+        </main>
+
+        <!-- VIEW: GOALS -->
+        <main id="view-goals" class="hidden-view flex-1 px-6 space-y-6 pop-in py-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Target Nabung 🎯</h2>
+                <button onclick="openGoalModal()" class="text-xs bg-blue-600 text-white hover:bg-blue-500 px-3 py-1.5 rounded-full font-bold shadow-lg flex items-center gap-1">
+                    <span>+</span> Target
+                </button>
+            </div>
+            <div id="goals-list" class="space-y-4 pb-20"></div>
+        </main>
+
+        <!-- VIEW: REWARDS (Moved from Modal) -->
+        <main id="view-rewards" class="hidden-view flex-1 px-6 space-y-4 pop-in py-4">
+            <h2 class="text-xl font-bold">Rewards & Badges 🏆</h2>
+            <div class="glass p-4 rounded-xl flex items-center gap-4">
+                <div class="text-3xl">⭐</div>
+                <div>
+                    <h3 class="text-sm font-bold">Level Kamu: <span id="reward-level-name">Newbie</span></h3>
+                    <p class="text-xs opacity-60">Kumpulkan XP dengan rajin mencatat!</p>
+                </div>
+            </div>
+            
+            <h3 class="text-sm font-bold opacity-80 mt-4">Koleksi Lencana</h3>
+            <div id="badges-grid-view" class="grid grid-cols-3 gap-3 pb-20"></div>
+        </main>
+
+        <!-- FAB -->
+        <button id="fab-add" onclick="openModal()" class="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95 z-40 group ring-4 ring-black/20">
+            <span class="text-3xl font-light mb-1">+</span>
+        </button>
+
+        <!-- Bottom Nav (5 ITEMS) -->
+        <nav class="fixed bottom-0 left-0 right-0 h-20 rounded-t-3xl flex justify-around items-center px-2 pb-2 z-30 max-w-md mx-auto" style="background: var(--nav-bg); backdrop-filter: blur(10px); border-top: 1px solid var(--card-border);">
+            <button id="nav-home" class="nav-btn active flex flex-col items-center gap-1 text-[10px] w-1/5 opacity-60 hover:opacity-100" onclick="switchTab('home')">
+                <span class="text-xl">🏠</span>
+                <span data-i18n="nav_home">Home</span>
+            </button>
+            <button id="nav-history" class="nav-btn flex flex-col items-center gap-1 text-[10px] w-1/5 opacity-60 hover:opacity-100" onclick="switchTab('history')">
+                <span class="text-xl">📜</span>
+                <span>Riwayat</span>
+            </button>
+            <button id="nav-stats" class="nav-btn flex flex-col items-center gap-1 text-[10px] w-1/5 opacity-60 hover:opacity-100" onclick="switchTab('stats')">
+                <span class="text-xl">📊</span>
+                <span data-i18n="nav_stats">Stats</span>
+            </button>
+            <button id="nav-goals" class="nav-btn flex flex-col items-center gap-1 text-[10px] w-1/5 opacity-60 hover:opacity-100" onclick="switchTab('goals')">
+                <span class="text-xl">🎯</span>
+                <span data-i18n="nav_goals">Target</span>
+            </button>
+            <button id="nav-rewards" class="nav-btn flex flex-col items-center gap-1 text-[10px] w-1/5 opacity-60 hover:opacity-100" onclick="switchTab('rewards')">
+                <span class="text-xl">🏆</span>
+                <span>Rewards</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- MODAL: ADD/EDIT TRANSAKSI -->
+    <div id="add-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="absolute bottom-0 left-0 right-0 rounded-t-[2rem] p-6 slide-up max-w-md mx-auto max-h-[90vh] flex flex-col" style="background: var(--modal-bg);">
+            <div class="w-12 h-1 bg-gray-500/30 rounded-full mx-auto mb-6 shrink-0"></div>
+            
+            <!-- Type Switcher -->
+            <div class="flex bg-black/10 p-1 rounded-xl mb-4">
+                <button type="button" onclick="switchEntryType('expense')" class="flex-1 py-2 rounded-lg text-xs font-bold transition bg-white/10 shadow text-white" id="btn-type-expense">Pengeluaran 💸</button>
+                <button type="button" onclick="switchEntryType('income')" class="flex-1 py-2 rounded-lg text-xs font-bold transition opacity-60" id="btn-type-income">Pemasukan 💰</button>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modal-title" class="text-xl font-bold text-gradient">Tambah Transaksi</h2>
+                <button onclick="closeModal()" class="p-1 opacity-50 hover:opacity-100 text-xl">✕</button>
+            </div>
+
+            <form id="expense-form" onsubmit="handleFormSubmit(event)" class="space-y-5 flex-1 overflow-y-auto pb-4 custom-scroll">
+                <div>
+                    <label class="block text-xs opacity-60 mb-1 ml-1">Kapan?</label>
+                    <input type="date" id="date" required class="w-full bg-black/5 border border-black/10 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500 transition font-medium" style="color: var(--text-main);">
+                </div>
+
+                <div>
+                    <label class="block text-xs opacity-60 mb-1 ml-1" data-i18n="amount_label">Nominal (Rp)</label>
+                    <input type="number" inputmode="numeric" id="amount" required class="w-full bg-black/5 border border-black/10 rounded-2xl py-4 px-4 text-2xl font-bold focus:outline-none focus:border-blue-500 transition" style="color: var(--text-main);" placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-xs opacity-60 mb-1 ml-1" data-i18n="desc_label">Keterangan</label>
+                    <input type="text" id="description" required class="w-full bg-black/5 border border-black/10 rounded-xl p-4 focus:outline-none focus:border-blue-500 transition" style="color: var(--text-main);" placeholder="e.g. Gaji Bulan Ini / Seblak">
+                </div>
+                
+                <!-- Dynamic Categories -->
+                <div>
+                    <div class="flex justify-between items-center mb-2 px-1">
+                        <label class="block text-xs opacity-60" data-i18n="category_label">Kategori</label>
+                        <button type="button" onclick="toggleAddCategoryUI()" class="text-[10px] font-bold text-blue-500 hover:underline">+ Buat Baru</button>
+                    </div>
+                    
+                    <div id="new-cat-ui" class="hidden mb-3 p-3 bg-black/5 rounded-xl border border-dashed border-black/20">
+                        <div class="flex gap-2">
+                            <input type="text" id="new-cat-icon" placeholder="Emoji" class="w-16 text-center bg-white/50 rounded-lg p-2" maxlength="2">
+                            <input type="text" id="new-cat-name" placeholder="Nama Kategori" class="flex-1 bg-white/50 rounded-lg p-2 text-sm">
+                            <button type="button" onclick="addNewCategory()" class="bg-blue-500 text-white rounded-lg px-3 text-xs font-bold">OK</button>
+                        </div>
+                    </div>
+
+                    <div id="category-grid" class="grid grid-cols-4 gap-2"></div>
+                </div>
+
+                <div id="vibe-section">
+                    <label class="block text-xs opacity-60 mb-2 ml-1" data-i18n="mood_label">Vibe Pengeluaran</label>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="setMood(this, 'need')" class="flex-1 py-2 rounded-lg bg-green-500/10 text-green-600 border border-green-500/20 text-xs font-bold mood-btn ring-2 ring-green-500">Need ✅</button>
+                        <button type="button" onclick="setMood(this, 'want')" class="flex-1 py-2 rounded-lg bg-yellow-500/10 text-yellow-600 border border-yellow-500/20 text-xs font-bold mood-btn">Want 🥺</button>
+                        <button type="button" onclick="setMood(this, 'guilty')" class="flex-1 py-2 rounded-lg bg-red-500/10 text-red-600 border border-red-500/20 text-xs font-bold mood-btn">Guilty 😭</button>
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" id="save-btn-text" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 py-3 rounded-xl font-bold text-lg text-white shadow-lg active:scale-95 transition-transform">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: GOAL -->
+    <div id="goal-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeGoalModal()"></div>
+        <div class="absolute bottom-0 left-0 right-0 rounded-t-[2rem] p-6 slide-up max-w-md mx-auto" style="background: var(--modal-bg);">
+            <h2 class="text-xl font-bold mb-4">Target Baru 🎯</h2>
+            <form onsubmit="handleGoalSubmit(event)" class="space-y-4">
+                <input type="text" id="goal-title" required class="w-full bg-black/5 p-3 rounded-xl" style="color: var(--text-main);" placeholder="Nama Target (e.g. HP Baru)">
+                <input type="number" id="goal-target" required class="w-full bg-black/5 p-3 rounded-xl" style="color: var(--text-main);" placeholder="Butuh Berapa (Rp)">
+                <button type="submit" class="w-full bg-blue-600 py-3 rounded-xl font-bold text-white">Gas Nabung!</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: SETTINGS -->
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSettings()"></div>
+        <div class="absolute bottom-0 left-0 right-0 rounded-t-[2rem] p-6 slide-up max-w-md mx-auto max-h-[90vh] overflow-y-auto" style="background: var(--modal-bg);">
+            <div class="w-12 h-1 bg-gray-500/30 rounded-full mx-auto mb-6"></div>
+            <h2 class="text-2xl font-bold mb-6">Pengaturan ✨</h2>
+
+            <div class="space-y-4 pb-10">
+                <!-- Profile -->
+                <div class="glass p-4 rounded-xl">
+                    <label class="block text-xs opacity-60 mb-2">Nama Panggilan</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="settings-name-input" class="flex-1 bg-black/10 rounded-lg p-2 text-sm focus:outline-none" style="color: var(--text-main);">
+                        <button onclick="saveName()" class="px-3 bg-blue-500 text-white rounded-lg text-xs font-bold">Save</button>
+                    </div>
+                </div>
+
+                <!-- Global Budget Limit -->
+                <div class="glass p-4 rounded-xl border border-blue-500/30">
+                    <label class="block text-xs opacity-60 mb-2 font-bold text-blue-400">Budget Pengeluaran Total (Limit) 🍩</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="settings-budget-input" placeholder="0 (Unlimited)" class="flex-1 bg-black/10 rounded-lg p-2 text-sm focus:outline-none font-bold" style="color: var(--text-main);">
+                        <button onclick="saveBudget()" class="px-3 bg-blue-500 text-white rounded-lg text-xs font-bold">Set</button>
+                    </div>
+                    <p class="text-[9px] opacity-50 mt-1">Ini limit global pengeluaran. Limit per kategori bisa diset di tab "Stats".</p>
+                </div>
+
+                <!-- Theme -->
+                <div class="glass p-4 rounded-xl">
+                    <label class="block text-xs opacity-60 mb-3 font-bold">Tema Aplikasi</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setTheme('theme-emo')" class="flex flex-col items-center gap-2 p-2 rounded-lg border border-transparent hover:border-purple-500 transition bg-slate-800">
+                            <div class="w-6 h-6 rounded-full bg-slate-900 border border-purple-500"></div>
+                            <span class="text-[10px] text-white">Emo</span>
+                        </button>
+                        <button onclick="setTheme('theme-kue')" class="flex flex-col items-center gap-2 p-2 rounded-lg border border-transparent hover:border-pink-500 transition bg-pink-100">
+                            <div class="w-6 h-6 rounded-full bg-pink-200 border border-pink-500"></div>
+                            <span class="text-[10px] text-pink-800">Kue</span>
+                        </button>
+                        <button onclick="setTheme('theme-bumi')" class="flex flex-col items-center gap-2 p-2 rounded-lg border border-transparent hover:border-green-500 transition bg-green-100">
+                            <div class="w-6 h-6 rounded-full bg-green-200 border border-green-500"></div>
+                            <span class="text-[10px] text-green-800">Bumi</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Backup & Restore -->
+                <div class="glass p-4 rounded-xl border border-purple-500/20">
+                    <label class="block text-xs opacity-60 mb-2 font-bold text-purple-400">Backup & Restore 🛡️</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="exportData()" class="flex items-center justify-center gap-2 px-3 py-3 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-xs font-bold transition">
+                            <span>📤 Export JSON</span>
+                        </button>
+                        <label class="flex items-center justify-center gap-2 px-3 py-3 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-xs font-bold transition cursor-pointer">
+                            <span>📥 Import JSON</span>
+                            <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(this)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="glass p-4 rounded-xl flex justify-between items-center border border-red-500/20">
+                    <div>
+                        <span class="text-red-400 text-sm font-bold">Reset Data</span>
+                        <p class="text-[9px] opacity-50">Hapus semua transaksi & goal.</p>
+                    </div>
+                    <button onclick="clearData()" class="px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg font-bold text-xs hover:bg-red-500 hover:text-white transition">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[70] flex items-center gap-3 transform -translate-y-32 transition-all duration-300 pointer-events-none border border-slate-200 min-w-[200px] justify-center">
+        <span class="text-xl">✨</span>
+        <span id="toast-msg" class="text-sm font-bold">Action Done!</span>
+    </div>
+
+    <script>
+        // --- CONSTANTS & CONFIG ---
+        const APP_KEY = 'cuankeeper_v4_ultimate';
+        
+        const defaultCats = [
+            { id: 'food', label: 'Makan', icon: '🍔', color: '#f59e0b', budget: 0, type: 'expense' },
+            { id: 'transport', label: 'Ojek', icon: '🛵', color: '#3b82f6', budget: 0, type: 'expense' },
+            { id: 'shopping', label: 'Belanja', icon: '🛍️', color: '#ec4899', budget: 0, type: 'expense' },
+            { id: 'hilling', label: 'Healing', icon: '🏖️', color: '#8b5cf6', budget: 0, type: 'expense' },
+            { id: 'bills', label: 'Tagihan', icon: '⚡', color: '#ef4444', budget: 0, type: 'expense' },
+            { id: 'other', label: 'Lainnya', icon: '👻', color: '#64748b', budget: 0, type: 'expense' },
+            
+            // Income Categories
+            { id: 'salary', label: 'Gaji', icon: '💸', color: '#22c55e', budget: 0, type: 'income' },
+            { id: 'bonus', label: 'Bonus', icon: '🎁', color: '#10b981', budget: 0, type: 'income' },
+            { id: 'freelance', label: 'Freelance', icon: '💻', color: '#14b8a6', budget: 0, type: 'income' },
+            { id: 'gift', label: 'Hadiah', icon: '🎀', color: '#a855f7', budget: 0, type: 'income' },
+            { id: 'invest', label: 'Investasi', icon: '📈', color: '#f59e0b', budget: 0, type: 'income' }
+        ];
+
+        const availableBadges = [
+            { id: 'first_step', icon: '👶', title: 'Langkah Awal', desc: 'Catat pengeluaran pertama' },
+            { id: 'streak_3', icon: '🔥', title: 'On Fire', desc: 'Nyalain streak 3 hari' },
+            { id: 'streak_7', icon: '🚀', title: 'Rutinitas', desc: 'Nyalain streak 7 hari' },
+            { id: 'saver', icon: '🐷', title: 'Si Hemat', desc: 'Pengeluaran < 50% Budget' },
+            { id: 'goal_getter', icon: '🎯', title: 'Dream Chaser', desc: 'Bikin target tabungan' },
+            { id: 'night_owl', icon: '🦉', title: 'Begadang', desc: 'Nyatet jam 12 malem - 4 pagi' },
+            { id: 'rich_kid', icon: '🤑', title: 'Sultan', desc: 'Pemasukan > 10 Juta' }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        let state = {
+            transactions: [],
+            goals: [],
+            categories: [...defaultCats],
+            userName: 'Sobat Dongblang',
+            theme: 'theme-emo',
+            xp: 0,
+            level: 1,
+            monthlyBudget: 0,
+            streak: 0,
+            lastLoginDate: null,
+            unlockedBadges: [],
+            lang: 'id'
+        };
+
+        // UI State
+        let editingId = null;
+        let chartType = 'bar'; // 'bar' or 'pie'
+        let currentEntryType = 'expense'; // 'expense' or 'income'
+        
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            loadData();
+            checkStreak();
+            applyTheme(state.theme);
+            
+            // Set Default Month Filter to Current Month
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('filter-month').value = `${yyyy}-${mm}`;
+
+            updateUI();
+            setRandomTip();
+            setupGreeting();
+            switchTab('home');
+        };
+
+        function loadData() {
+            const stored = localStorage.getItem(APP_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                state = { ...state, ...parsed }; 
+                
+                // Legacy Fixes: Ensure Categories have type
+                if (!state.categories || state.categories.length === 0 || !state.categories.find(c => c.type === 'income')) {
+                    // Reset or merge to add income categories if missing
+                    const existingIds = state.categories.map(c => c.id);
+                    const newCats = defaultCats.filter(d => !existingIds.includes(d.id));
+                    state.categories = [...state.categories, ...newCats];
+                    
+                    // Add default type 'expense' to old data
+                    state.categories.forEach(c => {
+                        if (!c.type) c.type = 'expense';
+                    });
+                }
+                
+                // Transactions fix
+                state.transactions.forEach(t => {
+                    if (!t.type) t.type = 'expense';
+                });
+
+                if (!state.unlockedBadges) state.unlockedBadges = [];
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(APP_KEY, JSON.stringify(state));
+            updateUI();
+        }
+
+        // --- GAMIFICATION: STREAK & BADGES ---
+        function checkStreak() {
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (state.lastLoginDate !== today) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+                if (state.lastLoginDate === yesterdayStr) {
+                    state.streak += 1;
+                    if(state.streak === 3) unlockBadge('streak_3');
+                    if(state.streak === 7) unlockBadge('streak_7');
+                } else {
+                    if(state.lastLoginDate) state.streak = 1;
+                    else state.streak = 1;
+                }
+                state.lastLoginDate = today;
+                saveData(); // Save silently
+            }
+        }
+
+        function unlockBadge(badgeId) {
+            if (!state.unlockedBadges.includes(badgeId)) {
+                state.unlockedBadges.push(badgeId);
+                const badge = availableBadges.find(b => b.id === badgeId);
+                showToast(`Badge Unlocked: ${badge.title} ${badge.icon}`);
+                document.getElementById('new-badge-dot').classList.remove('hidden');
+                addXP(50);
+            }
+        }
+
+        function renderBadgesView() {
+            const grid = document.getElementById('badges-grid-view');
+            grid.innerHTML = '';
+            
+            availableBadges.forEach(badge => {
+                const isUnlocked = state.unlockedBadges.includes(badge.id);
+                const item = document.createElement('div');
+                item.className = `p-3 rounded-xl flex flex-col items-center text-center gap-1 border ${isUnlocked ? 'bg-black/10 border-yellow-500/30' : 'bg-black/5 border-transparent opacity-40 grayscale'}`;
+                item.innerHTML = `
+                    <div class="text-3xl mb-1">${badge.icon}</div>
+                    <h4 class="font-bold text-[10px]">${badge.title}</h4>
+                    <p class="text-[8px] opacity-70 leading-tight">${badge.desc}</p>
+                `;
+                grid.appendChild(item);
+            });
+            
+            const levels = ["Newbie 👶", "Pejuang Receh ⚔️", "Si Hemat 🛡️", "Juragan Cuan 💰", "Sultan 👑", "Dewa Uang 🐲"];
+            let currentTitle = levels[Math.min(state.level-1, levels.length-1)];
+            document.getElementById('reward-level-name').textContent = currentTitle;
+        }
+
+        // --- CORE LOGIC & FILTER ---
+        function getFilteredTransactions() {
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+            const monthVal = document.getElementById('filter-month').value; // YYYY-MM
+
+            return state.transactions.filter(t => {
+                const matchSearch = t.description.toLowerCase().includes(searchVal) || t.amount.toString().includes(searchVal);
+                let matchDate = true;
+                if (monthVal) {
+                    if (t.date.includes('-')) {
+                        matchDate = t.date.startsWith(monthVal);
+                    } else {
+                        matchDate = true; 
+                    }
+                }
+                return matchSearch && matchDate;
+            }).reverse();
+        }
+
+        // --- UI UPDATES ---
+        function updateUI() {
+            // Header
+            document.getElementById('user-name-display').textContent = state.userName + " ✨";
+            document.getElementById('settings-name-input').value = state.userName;
+            document.getElementById('settings-budget-input').value = state.monthlyBudget || '';
+
+            // Streak
+            if(state.streak > 0) {
+                document.getElementById('streak-badge').classList.remove('hidden');
+                document.getElementById('streak-count').textContent = `${state.streak} Days`;
+            }
+
+            // XP & Level
+            updateLevel();
+
+            // Balance Calculation (Total Income - Total Expense for selected month)
+            const currentMonthISO = new Date().toISOString().slice(0, 7); // YYYY-MM
+            
+            let monthIncome = 0;
+            let monthExpense = 0;
+            
+            state.transactions.forEach(t => {
+                if(t.date.startsWith(currentMonthISO)) {
+                    if(t.type === 'income') monthIncome += t.amount;
+                    else monthExpense += t.amount;
+                }
+            });
+
+            // Badge Check for Rich Kid
+            if (monthIncome > 10000000) unlockBadge('rich_kid');
+
+            const totalBalance = monthIncome - monthExpense;
+            document.getElementById('total-balance').textContent = formatRupiah(totalBalance);
+            if(totalBalance < 0) document.getElementById('total-balance').classList.replace('text-gradient', 'text-red-400');
+            else document.getElementById('total-balance').classList.replace('text-red-400', 'text-gradient');
+            
+            // Budget Ring Logic (Only Expenses count towards budget)
+            const budgetRing = document.getElementById('home-budget-ring');
+            const statusBadge = document.getElementById('monthly-status-badge');
+            
+            if (state.monthlyBudget > 0) {
+                const percent = Math.min((monthExpense / state.monthlyBudget) * 100, 100);
+                const displayPercent = Math.round((monthExpense / state.monthlyBudget) * 100);
+                
+                document.getElementById('budget-percent').textContent = displayPercent + "%";
+                
+                let ringColor = 'var(--bar-color)';
+                if (percent > 75) ringColor = '#facc15'; 
+                if (percent >= 100) ringColor = '#ef4444'; 
+
+                budgetRing.style.background = `conic-gradient(${ringColor} ${percent * 3.6}deg, rgba(255,255,255,0.1) 0deg)`;
+                
+                if(percent < 50) { 
+                    statusBadge.innerHTML = '<span>🛡️ Aman</span>'; statusBadge.className = 'inline-flex px-2 py-1 rounded-lg text-[10px] font-bold items-center gap-1 bg-green-500/20 text-green-500';
+                    if (percent < 50 && state.monthlyBudget > 100000) unlockBadge('saver'); 
+                }
+                else if(percent < 90) { statusBadge.innerHTML = '<span>⚠️ Hati-hati</span>'; statusBadge.className = 'inline-flex px-2 py-1 rounded-lg text-[10px] font-bold items-center gap-1 bg-yellow-500/20 text-yellow-500'; }
+                else { statusBadge.innerHTML = '<span>🚨 Boncos</span>'; statusBadge.className = 'inline-flex px-2 py-1 rounded-lg text-[10px] font-bold items-center gap-1 bg-red-500/20 text-red-500'; }
+
+            } else {
+                budgetRing.style.background = `conic-gradient(var(--bar-color) 0deg, rgba(255,255,255,0.1) 0deg)`;
+                document.getElementById('budget-percent').innerHTML = '<span class="text-xs">No<br>Limit</span>';
+                statusBadge.innerHTML = '<span>♾️ Unlimited</span>';
+                statusBadge.className = 'inline-flex px-2 py-1 rounded-lg text-[10px] font-bold items-center gap-1 bg-blue-500/20 text-blue-500';
+            }
+
+            renderCategories();
+            renderRecentTransactions(); 
+            renderFullHistory(); 
+            renderStatsView();
+            renderGoalsView();
+            renderBadgesView();
+        }
+
+        function updateLevel() {
+            const levels = [0, 100, 300, 600, 1000, 2000];
+            const titles = ["Newbie 👶", "Pejuang Receh ⚔️", "Si Hemat 🛡️", "Juragan Cuan 💰", "Sultan 👑", "Dewa Uang 🐲"];
+            
+            let lvl = 1;
+            for(let i=0; i<levels.length; i++) {
+                if(state.xp >= levels[i]) lvl = i + 1;
+            }
+            state.level = lvl;
+
+            const nextXp = levels[lvl] || state.xp * 1.5;
+            const prevXp = levels[lvl-1] || 0;
+            const progress = ((state.xp - prevXp) / (nextXp - prevXp)) * 100;
+
+            document.getElementById('user-level-badge').textContent = titles[lvl-1] || titles[titles.length-1];
+            document.getElementById('xp-progress').style.width = `${Math.min(progress, 100)}%`;
+        }
+
+        function addXP(amount) { state.xp += amount; updateLevel(); }
+        function handleSearch() { renderFullHistory(); }
+
+        // --- RENDERERS ---
+
+        function renderRecentTransactions() {
+            const listEl = document.getElementById('recent-transaction-list');
+            const data = [...state.transactions].reverse().slice(0, 3);
+            listEl.innerHTML = '';
+            
+            if (data.length === 0) {
+                listEl.innerHTML = `<div class="text-center p-4 opacity-50 text-xs border-dashed border-2 border-slate-500 rounded-xl">Belum ada jajan hari ini.</div>`;
+                return;
+            }
+            data.forEach((t) => createTransactionItem(t, listEl, false));
+        }
+
+        function renderFullHistory() {
+            const listEl = document.getElementById('transaction-list');
+            const data = getFilteredTransactions();
+            listEl.innerHTML = '';
+
+            if (data.length === 0) {
+                listEl.innerHTML = `<div class="text-center p-8 opacity-50 text-xs border-dashed border-2 border-slate-500 rounded-xl">Data tidak ditemukan brodi...</div>`;
+                return;
+            }
+            data.forEach((t) => createTransactionItem(t, listEl, true));
+        }
+
+        function createTransactionItem(t, container, allowDelete) {
+            const originalIndex = state.transactions.findIndex(orig => orig.id === t.id);
+            const cat = state.categories.find(c => c.id === t.category) || state.categories[0];
+            
+            let displayDate = t.date;
+            if(t.date.includes('-')) {
+                const d = new Date(t.date);
+                displayDate = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            }
+
+            const isIncome = t.type === 'income';
+            const amountColor = isIncome ? 'text-green-500' : 'text-red-400';
+            const prefix = isIncome ? '+' : '-';
+
+            const item = document.createElement('div');
+            item.className = 'glass rounded-xl p-3 flex items-center gap-3 active:scale-95 transition-transform cursor-pointer group';
+            item.onclick = (e) => {
+                if(!e.target.closest('.delete-btn')) editItem(originalIndex);
+            };
+
+            item.innerHTML = `
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-black/5 shrink-0">${cat.icon}</div>
+                <div class="flex-1 overflow-hidden">
+                    <h4 class="font-bold text-sm truncate opacity-90">${t.description}</h4>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-black/10 opacity-70">${cat.label}</span>
+                        <span class="text-[10px] opacity-50">${displayDate}</span>
+                    </div>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="font-bold text-sm ${amountColor}">${prefix} ${formatRupiahCompact(t.amount)}</p>
+                    ${!isIncome ? `<span class="text-[10px] ${t.mood === 'guilty' ? 'text-red-500' : t.mood === 'want' ? 'text-yellow-500' : 'text-green-500'} font-bold">${t.mood || 'need'}</span>` : ''}
+                </div>
+                ${allowDelete ? `<button class="delete-btn opacity-0 group-hover:opacity-100 transition p-2 text-xs text-red-500 hover:bg-red-500/10 rounded-lg ml-1" onclick="deleteItem(${originalIndex})">✕</button>` : ''}
+            `;
+            container.appendChild(item);
+        }
+
+        // --- STATS VIEW (EXPENSE ONLY for now) ---
+        function toggleChartType(type) {
+            chartType = type;
+            document.getElementById('chart-view-bar').className = type === 'bar' ? 'w-full slide-up' : 'hidden';
+            document.getElementById('chart-view-pie').className = type === 'pie' ? 'w-full flex flex-col items-center slide-up' : 'hidden';
+            
+            const btnBar = document.getElementById('btn-chart-bar');
+            const btnPie = document.getElementById('btn-chart-pie');
+            
+            if (type === 'bar') {
+                btnBar.className = 'px-3 py-1.5 rounded-md bg-blue-500 text-white shadow';
+                btnPie.className = 'px-3 py-1.5 rounded-md opacity-60 hover:opacity-100';
+            } else {
+                btnBar.className = 'px-3 py-1.5 rounded-md opacity-60 hover:opacity-100';
+                btnPie.className = 'px-3 py-1.5 rounded-md bg-blue-500 text-white shadow';
+                renderPieChart();
+            }
+        }
+
+        function renderStatsView() {
+            // Stats focus on Expense
+            const chartContainer = document.getElementById('weekly-chart');
+            const daysContainer = document.getElementById('weekly-days');
+            const catList = document.getElementById('stats-category-list');
+            
+            chartContainer.innerHTML = '';
+            daysContainer.innerHTML = '';
+            catList.innerHTML = '';
+
+            // Weekly Data (Expenses Only)
+            const last7Days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                last7Days.push({ dateISO: d.toISOString().split('T')[0], name: d.toLocaleDateString('id-ID', { weekday: 'short' }), amount: 0 });
+            }
+            state.transactions.forEach(t => {
+                if (t.type === 'expense') {
+                    const day = last7Days.find(d => d.dateISO === t.date);
+                    if (day) day.amount += t.amount;
+                }
+            });
+            const maxAmount = Math.max(...last7Days.map(d => d.amount)) || 1; 
+
+            last7Days.forEach(day => {
+                const height = Math.max((day.amount / maxAmount) * 100, 4);
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = `${height}%`;
+                if(day.amount > 0) bar.setAttribute('data-amount', formatRupiahCompact(day.amount));
+                chartContainer.appendChild(bar);
+                const label = document.createElement('div'); label.textContent = day.name; daysContainer.appendChild(label);
+            });
+
+            // Gen-Z Insight Logic
+            const totalSpent = state.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            let insight = "Data kurang banyak nih, jajan lagi dong!";
+            if (totalSpent > 0) {
+                 if (state.monthlyBudget > 0 && totalSpent > state.monthlyBudget) {
+                     insight = "🚨 WADUH! Dompet kritis, mending puasa senin-kamis dulu deh.";
+                 } else if (state.monthlyBudget > 0 && totalSpent < state.monthlyBudget * 0.5) {
+                     insight = "🔥 Mode Irit: ON. Lo keren banget, calon sultan masa depan!";
+                 } else {
+                     const totals = {};
+                     state.transactions.forEach(t => { if(t.type === 'expense') totals[t.category] = (totals[t.category] || 0) + t.amount; });
+                     const topCat = Object.keys(totals).sort((a,b) => totals[b] - totals[a])[0];
+                     
+                     if (topCat === 'food') insight = "Perut kenyang, dompet meriang. Kurangin jajan woy! 🍔";
+                     else if (topCat === 'hilling') insight = "Healing mulu, kapan kayanya? Kerja lembur bagai kuda! 🏖️";
+                     else if (topCat === 'shopping') insight = "Checkout terooos! Kurir sampe bosen liat muka lo. 🛍️";
+                     else insight = "Keuangan lo stabil (mungkin). Pertahankan bestie! ✨";
+                 }
+            }
+            document.getElementById('ai-insight-text').textContent = insight;
+
+            // Category Breakdown List (Expenses Only, sorted)
+            const totals = {};
+            state.transactions.forEach(t => { if(t.type === 'expense') totals[t.category] = (totals[t.category] || 0) + t.amount; });
+            const sorted = Object.keys(totals).sort((a,b) => totals[b] - totals[a]);
+            
+            // Show all expense categories even if 0
+            state.categories.forEach(c => { if(c.type === 'expense' && !sorted.includes(c.id)) sorted.push(c.id); });
+
+            sorted.forEach(catId => {
+                const catObj = state.categories.find(c => c.id === catId);
+                if (!catObj) return; // Skip if income category accident
+                
+                const amount = totals[catId] || 0;
+                
+                let budgetStatus = "";
+                let barColor = "bg-blue-400";
+                let percentWidth = 0;
+                
+                if (catObj.budget > 0) {
+                    const pct = (amount / catObj.budget) * 100;
+                    percentWidth = Math.min(pct, 100);
+                    if (pct > 100) { barColor = "bg-red-500"; budgetStatus = "Over!"; }
+                    else if (pct > 80) { barColor = "bg-yellow-400"; budgetStatus = "Hampir habis"; }
+                    else { barColor = "bg-green-400"; budgetStatus = "Aman"; }
+                } else {
+                    const total = state.transactions.filter(t => t.type === 'expense').reduce((a,b)=>a+b.amount,0) || 1;
+                    percentWidth = (amount / total) * 100;
+                }
+
+                const item = document.createElement('div');
+                item.className = 'glass p-3 rounded-xl cursor-pointer active:scale-95 transition';
+                item.onclick = () => setCategoryBudget(catId);
+                item.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center gap-2">
+                            <span>${catObj.icon}</span>
+                            <span class="font-bold text-sm opacity-90">${catObj.label}</span>
+                            ${catObj.budget > 0 ? `<span class="text-[9px] opacity-60 border border-white/20 px-1 rounded">Limit: ${formatRupiahCompact(catObj.budget)}</span>` : ''}
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-sm">${formatRupiah(amount)}</span>
+                        </div>
+                    </div>
+                    <div class="w-full h-1.5 bg-black/10 rounded-full mt-1 overflow-hidden">
+                        <div class="h-full ${barColor} rounded-full transition-all duration-500" style="width:${percentWidth}%"></div>
+                    </div>
+                    ${catObj.budget > 0 ? `
+                    <div class="flex justify-between text-[9px] mt-1 opacity-60">
+                        <span>${budgetStatus}</span>
+                        <span>${Math.round((amount/catObj.budget)*100)}% Used</span>
+                    </div>` : ''}
+                `;
+                catList.appendChild(item);
+            });
+
+            renderPieChart();
+        }
+
+        function setCategoryBudget(catId) {
+            const catIndex = state.categories.findIndex(c => c.id === catId);
+            if (catIndex === -1) return;
+            const current = state.categories[catIndex].budget || 0;
+            const input = prompt(`Set Budget Bulanan untuk ${state.categories[catIndex].label} (0 untuk unlimited):`, current);
+            if (input !== null) {
+                const val = parseFloat(input);
+                if (!isNaN(val)) {
+                    state.categories[catIndex].budget = val;
+                    saveData();
+                    renderStatsView(); 
+                    showToast(`Budget ${state.categories[catIndex].label} diupdate!`);
+                }
+            }
+        }
+
+        function renderPieChart() {
+            if(state.transactions.length === 0) return;
+            const totals = {};
+            let grandTotal = 0;
+            state.transactions.forEach(t => { 
+                if(t.type === 'expense') {
+                    totals[t.category] = (totals[t.category] || 0) + t.amount; 
+                    grandTotal += t.amount; 
+                }
+            });
+            const sortedCats = Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
+            
+            if(sortedCats.length > 0) {
+                const topCatId = sortedCats[0];
+                const topCatObj = state.categories.find(c => c.id === topCatId) || state.categories[0];
+                document.getElementById('top-category-name').textContent = topCatObj.label;
+                document.getElementById('top-category-name').style.color = topCatObj.color;
+
+                let gradientStr = [];
+                let currentDeg = 0;
+                sortedCats.forEach(catId => {
+                    const catObj = state.categories.find(c => c.id === catId) || state.categories[0];
+                    const percent = (totals[catId] / grandTotal) * 100;
+                    const endDeg = currentDeg + (percent * 3.6);
+                    gradientStr.push(`${catObj.color} ${currentDeg}deg ${endDeg}deg`);
+                    currentDeg = endDeg;
+                });
+                document.getElementById('expense-chart').style.background = `conic-gradient(${gradientStr.join(', ')})`;
+            }
+        }
+
+        // --- GOALS ---
+        function renderGoalsView() {
+            const list = document.getElementById('goals-list');
+            list.innerHTML = '';
+            if(!state.goals || state.goals.length === 0) return list.innerHTML = `<div class="text-center p-10 opacity-50 text-sm border-2 border-dashed border-slate-500 rounded-xl">Mimpi apa nih? Yuk tulis target!</div>`;
+
+            state.goals.forEach((g, index) => {
+                const progress = Math.min((g.current / g.target) * 100, 100);
+                const isCompleted = g.current >= g.target;
+                
+                const el = document.createElement('div');
+                el.className = `glass p-4 rounded-xl relative ${isCompleted ? 'border-2 border-green-500/50' : ''}`;
+                el.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold flex items-center gap-2">${g.title} ${isCompleted ? '✅' : ''}</h3>
+                        <button onclick="deleteGoal(${index})" class="opacity-30 hover:opacity-100 hover:text-red-500 text-xs font-bold">Hapus</button>
+                    </div>
+                    <div class="flex justify-between text-xs opacity-60 mb-1">
+                        <span>${formatRupiahCompact(g.current)}</span>
+                        <span>${formatRupiahCompact(g.target)}</span>
+                    </div>
+                    <div class="w-full bg-black/10 rounded-full h-3 mb-3 overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-400 to-purple-500 h-full transition-all duration-500" style="width: ${progress}%"></div>
+                    </div>
+                    ${!isCompleted ? `
+                    <button onclick="addGoalFunds(${index})" class="w-full py-2 bg-black/5 hover:bg-black/10 rounded-lg text-xs font-bold text-blue-500 active:scale-95 transition">
+                        + Tabung (Dapet XP)
+                    </button>` : `<div class="text-center text-xs font-bold text-green-500">Target Tercapai! 🎉</div>`}
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        // --- UTILS & HANDLERS ---
+        function formatRupiah(n) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n); }
+        function formatRupiahCompact(n) { if (n >= 1000000) return (n / 1000000).toFixed(1) + 'jt'; if (n >= 1000) return (n / 1000).toFixed(0) + 'rb'; return n; }
+
+        function switchEntryType(type) {
+            currentEntryType = type;
+            const btnExp = document.getElementById('btn-type-expense');
+            const btnInc = document.getElementById('btn-type-income');
+            const vibeSec = document.getElementById('vibe-section');
+            
+            if (type === 'expense') {
+                btnExp.className = "flex-1 py-2 rounded-lg text-xs font-bold transition bg-white/10 shadow text-white";
+                btnInc.className = "flex-1 py-2 rounded-lg text-xs font-bold transition opacity-60";
+                vibeSec.classList.remove('hidden');
+            } else {
+                btnExp.className = "flex-1 py-2 rounded-lg text-xs font-bold transition opacity-60";
+                btnInc.className = "flex-1 py-2 rounded-lg text-xs font-bold transition bg-white/10 shadow text-white";
+                vibeSec.classList.add('hidden');
+            }
+            renderCategories(); // re-render categories based on type
+        }
+
+        function openModal() { 
+            editingId = null;
+            document.getElementById('modal-title').innerText = "Tambah Transaksi";
+            document.getElementById('save-btn-text').innerText = "Simpan";
+            document.getElementById('add-modal').classList.remove('hidden'); 
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('amount').value = '';
+            document.getElementById('description').value = '';
+            switchEntryType('expense'); // Reset to default
+        }
+        function closeModal() { document.getElementById('add-modal').classList.add('hidden'); document.getElementById('new-cat-ui').classList.add('hidden'); }
+        
+        function editItem(index) {
+            const item = state.transactions[index];
+            editingId = item.id;
+            
+            document.getElementById('modal-title').innerText = "Edit Transaksi";
+            document.getElementById('save-btn-text').innerText = "Update";
+            document.getElementById('amount').value = item.amount;
+            document.getElementById('description').value = item.description;
+            document.getElementById('date').value = item.date; // ISO format
+
+            // Set Mood
+            setMood(document.querySelector(`button[onclick*="'${item.mood}'"]`), item.mood);
+            
+            // Set Entry Type & Categories
+            switchEntryType(item.type || 'expense');
+            
+            // Set Category Checkbox (after re-render)
+            setTimeout(() => {
+                const catRadio = document.querySelector(`input[name="category"][value="${item.category}"]`);
+                if(catRadio) catRadio.checked = true;
+            }, 50);
+
+            document.getElementById('add-modal').classList.remove('hidden');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const dateVal = document.getElementById('date').value;
+            const amt = parseFloat(document.getElementById('amount').value);
+            const desc = document.getElementById('description').value;
+            const catRadio = document.querySelector('input[name="category"]:checked');
+            // If no category selected, default to first available of current type
+            const defaultCat = state.categories.find(c => c.type === currentEntryType) || state.categories[0];
+            const cat = catRadio ? catRadio.value : defaultCat.id;
+            
+            if(!amt || !desc || !dateVal) return;
+
+            // Night Owl Badge Check
+            const hour = new Date().getHours();
+            if(hour >= 0 && hour < 5) unlockBadge('night_owl');
+
+            if (editingId) {
+                const idx = state.transactions.findIndex(t => t.id === editingId);
+                if(idx !== -1) {
+                    state.transactions[idx] = { 
+                        ...state.transactions[idx], 
+                        amount: amt, 
+                        description: desc, 
+                        category: cat, 
+                        mood: state.currentMood, 
+                        date: dateVal,
+                        type: currentEntryType 
+                    };
+                    showToast("Data diupdate! 👌");
+                }
+            } else {
+                state.transactions.push({ 
+                    id: Date.now(), 
+                    amount: amt, 
+                    description: desc, 
+                    category: cat, 
+                    mood: state.currentMood, 
+                    date: dateVal,
+                    type: currentEntryType
+                });
+                if(state.transactions.length === 1) unlockBadge('first_step');
+                addXP(10); 
+                showToast("Catatan tersimpan (+10 XP) ✨");
+            }
+            saveData();
+            closeModal();
+        }
+
+        function deleteItem(idx) { if(confirm('Hapus transaksi ini?')) { state.transactions.splice(idx, 1); saveData(); } }
+
+        function saveBudget() {
+            const val = document.getElementById('settings-budget-input').value;
+            state.monthlyBudget = val ? parseFloat(val) : 0;
+            saveData();
+            showToast("Budget diset! 🍩");
+        }
+
+        // --- SETTINGS & BACKUP ---
+        function exportData() {
+            const dataStr = JSON.stringify(state, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CuanKeeper_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Backup berhasil didownload! 📂");
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(imported.transactions && Array.isArray(imported.transactions)) {
+                        if(confirm('Warning: Data lama akan ditimpa dengan data backup ini. Lanjut?')) {
+                            state = { ...state, ...imported }; // Merge safely
+                            saveData();
+                            closeSettings();
+                            showToast("Restore sukses! 🎉");
+                            setTimeout(() => window.location.reload(), 1000); // Reload to ensure everything renders fresh
+                        }
+                    } else {
+                        alert("Format JSON salah brodi!");
+                    }
+                } catch(err) {
+                    alert("Gagal baca file!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- BASIC UI HELPERS ---
+        function switchTab(tabId) {
+            ['home', 'history', 'stats', 'goals', 'rewards'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden-view'));
+            ['nav-home', 'nav-history', 'nav-stats', 'nav-goals', 'nav-rewards'].forEach(n => document.getElementById(n).classList.remove('active'));
+            document.getElementById(`view-${tabId}`).classList.remove('hidden-view');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+            
+            const fab = document.getElementById('fab-add');
+            if(tabId === 'home' || tabId === 'history') fab.classList.remove('hidden'); else fab.classList.add('hidden');
+        }
+
+        function setMood(btn, mood) {
+            state.currentMood = mood;
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('ring-2', 'ring-green-500', 'ring-yellow-500', 'ring-red-500'));
+            const color = mood === 'need' ? 'green' : mood === 'want' ? 'yellow' : 'red';
+            btn.classList.add('ring-2', `ring-${color}-500`);
+        }
+        
+        // Category Helpers
+        function renderCategories() {
+            const grid = document.getElementById('category-grid');
+            grid.innerHTML = '';
+            
+            // Filter categories based on current Entry Type
+            const filteredCats = state.categories.filter(c => c.type === currentEntryType);
+            
+            filteredCats.forEach(cat => {
+                const label = document.createElement('label');
+                label.className = 'cursor-pointer group';
+                label.innerHTML = `
+                    <input type="radio" name="category" value="${cat.id}" class="hidden category-radio" ${cat === filteredCats[0] ? 'checked' : ''}>
+                    <div class="flex flex-col items-center justify-center p-2 rounded-xl bg-black/5 border border-transparent transition-all hover:bg-black/10">
+                        <span class="text-xl mb-1 group-hover:scale-110 transition">${cat.icon}</span>
+                        <span class="text-[9px] font-bold opacity-70 truncate w-full text-center" style="color:var(--text-main)">${cat.label}</span>
+                    </div>
+                `;
+                grid.appendChild(label);
+            });
+        }
+        function toggleAddCategoryUI() { document.getElementById('new-cat-ui').classList.toggle('hidden'); }
+        function addNewCategory() {
+            const icon = document.getElementById('new-cat-icon').value || '✨';
+            const name = document.getElementById('new-cat-name').value;
+            if (!name) return alert("Isi nama kategori dulu bro!");
+            
+            state.categories.push({ 
+                id: 'cat_' + Date.now(), 
+                label: name, 
+                icon: icon, 
+                color: '#a855f7', 
+                budget: 0,
+                type: currentEntryType // Add category to current active type
+            });
+            
+            saveData();
+            toggleAddCategoryUI();
+            showToast("Kategori baru siap! 🎉");
+            renderCategories(); // refresh grid
+        }
+
+        // Goals Helpers
+        function openGoalModal() { document.getElementById('goal-modal').classList.remove('hidden'); }
+        function closeGoalModal() { document.getElementById('goal-modal').classList.add('hidden'); }
+        function handleGoalSubmit(e) {
+            e.preventDefault();
+            const title = document.getElementById('goal-title').value;
+            const target = parseFloat(document.getElementById('goal-target').value);
+            state.goals.push({ title, target, current: 0 });
+            unlockBadge('goal_getter');
+            addXP(20); saveData(); closeGoalModal(); showToast("Target diset! Semangat! 🎯");
+        }
+        function addGoalFunds(idx) {
+            const amt = prompt("Masukin nominal tabungan:");
+            if(amt && !isNaN(amt)) {
+                state.goals[idx].current += parseFloat(amt);
+                addXP(15); saveData(); showToast("Tabungan nambah! (+15 XP) 💰");
+            }
+        }
+        function deleteGoal(idx) { if(confirm("Yakin hapus target ini?")) { state.goals.splice(idx, 1); saveData(); } }
+
+        // Settings Helpers
+        function openSettings() { document.getElementById('settings-modal').classList.remove('hidden'); }
+        function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
+        function saveName() { state.userName = document.getElementById('settings-name-input').value; saveData(); showToast("Nama diupdate!"); }
+        function setTheme(theme) { state.theme = theme; applyTheme(theme); saveData(); showToast("Tema diganti! 🎨"); }
+        function applyTheme(theme) { document.body.className = `${theme} min-h-screen pb-24 relative transition-colors duration-500`; }
+        function clearData() { if(confirm('⚠️ PERINGATAN: Semua data akan hilang permanen. Yakin?')) { state.transactions = []; state.goals = []; state.xp = 0; state.level = 1; state.streak = 0; state.unlockedBadges = []; saveData(); window.location.reload(); } }
+        
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            t.classList.remove('-translate-y-32'); t.classList.add('translate-y-4');
+            setTimeout(() => { t.classList.remove('translate-y-4'); t.classList.add('-translate-y-32'); }, 3000);
+        }
+        function setupGreeting() {
+            const h = new Date().getHours();
+            document.getElementById('greeting').textContent = h < 12 ? "Pagi Brodi," : h < 15 ? "Siang Brodi," : h < 18 ? "Sore Brodi," : "Malem Brodi,";
+        }
+        function setRandomTip() {
+            const tips = ["Masak sendiri lebih hemat 50%!", "Jangan belanja pas laper.", "Uang receh = harta karun.", "Bawa bekal = auto kaya.", "Kopi sachet > Kopi kafe."];
+            document.getElementById('motivation-text').textContent = tips[Math.floor(Math.random() * tips.length)];
+        }
+    </script>
+</body>
+</html>
