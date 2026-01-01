@@ -345,7 +345,7 @@
 
             <div class="flex justify-between items-center mb-4">
                 <h2 id="modal-title" class="text-xl font-bold text-gradient">Tambah Transaksi</h2>
-                <button onclick="closeModal()" class="p-1 opacity-50 hover:opacity-100 text-xl">✕</button>
+                <button onclick="closeModal()" class="p-2 bg-black/5 rounded-full hover:bg-black/10 transition">✕</button>
             </div>
 
             <form id="expense-form" onsubmit="handleFormSubmit(event)" class="space-y-5 flex-1 overflow-y-auto pb-4 custom-scroll">
@@ -400,11 +400,34 @@
     <div id="goal-modal" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeGoalModal()"></div>
         <div class="absolute bottom-0 left-0 right-0 rounded-t-[2rem] p-6 slide-up max-w-md mx-auto" style="background: var(--modal-bg);">
-            <h2 class="text-xl font-bold mb-4">Target Baru 🎯</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Target Baru 🎯</h2>
+                <button onclick="closeGoalModal()" class="p-2 bg-black/5 rounded-full hover:bg-black/10 transition">✕</button>
+            </div>
             <form onsubmit="handleGoalSubmit(event)" class="space-y-4">
                 <input type="text" id="goal-title" required class="w-full bg-black/5 p-3 rounded-xl" style="color: var(--text-main);" placeholder="Nama Target (e.g. HP Baru)">
                 <input type="number" id="goal-target" required class="w-full bg-black/5 p-3 rounded-xl" style="color: var(--text-main);" placeholder="Butuh Berapa (Rp)">
                 <button type="submit" class="w-full bg-blue-600 py-3 rounded-xl font-bold text-white">Gas Nabung!</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CATEGORY BUDGET (NEW) -->
+    <div id="category-budget-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeCategoryBudgetModal()"></div>
+        <div class="absolute bottom-0 left-0 right-0 rounded-t-[2rem] p-6 slide-up max-w-md mx-auto" style="background: var(--modal-bg);">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="cat-budget-title" class="text-xl font-bold">Atur Budget </h2>
+                <button onclick="closeCategoryBudgetModal()" class="p-2 bg-black/5 rounded-full hover:bg-black/10 transition">✕</button>
+            </div>
+            <form onsubmit="handleCategoryBudgetSubmit(event)" class="space-y-4">
+                <input type="hidden" id="cat-budget-id">
+                <div>
+                    <label class="block text-xs opacity-60 mb-1 ml-1">Batas Maksimal (Rp)</label>
+                    <input type="number" id="cat-budget-input" required class="w-full bg-black/5 p-3 rounded-xl text-lg font-bold" style="color: var(--text-main);" placeholder="0">
+                    <p class="text-[9px] opacity-50 mt-1 ml-1">Isi 0 untuk tanpa limit.</p>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 py-3 rounded-xl font-bold text-white">Simpan Limit</button>
             </form>
         </div>
     </div>
@@ -414,7 +437,11 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSettings()"></div>
         <div class="absolute bottom-0 left-0 right-0 rounded-t-[2rem] p-6 slide-up max-w-md mx-auto max-h-[90vh] overflow-y-auto" style="background: var(--modal-bg);">
             <div class="w-12 h-1 bg-gray-500/30 rounded-full mx-auto mb-6"></div>
-            <h2 class="text-2xl font-bold mb-6">Pengaturan ✨</h2>
+            
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Pengaturan ✨</h2>
+                <button onclick="closeSettings()" class="p-2 bg-black/5 rounded-full hover:bg-black/10 transition">✕</button>
+            </div>
 
             <div class="space-y-4 pb-10">
                 <!-- Profile -->
@@ -433,7 +460,7 @@
                         <input type="number" id="settings-budget-input" placeholder="0 (Unlimited)" class="flex-1 bg-black/10 rounded-lg p-2 text-sm focus:outline-none font-bold" style="color: var(--text-main);">
                         <button onclick="saveBudget()" class="px-3 bg-blue-500 text-white rounded-lg text-xs font-bold">Set</button>
                     </div>
-                    <p class="text-[9px] opacity-50 mt-1">Ini limit global pengeluaran. Limit per kategori bisa diset di tab "Stats".</p>
+                    <p class="text-[9px] opacity-50 mt-1">Info: Jika limit per kategori diisi, totalnya akan dipakai sebagai Limit Utama.</p>
                 </div>
 
                 <!-- Theme -->
@@ -663,6 +690,13 @@
             }).reverse();
         }
 
+        // --- BUDGET LOGIC ---
+        function getTotalBudget() {
+            const categoriesTotal = state.categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+            // If categories have total budget > 0, use that. Otherwise use manual global budget.
+            return categoriesTotal > 0 ? categoriesTotal : state.monthlyBudget;
+        }
+
         // --- UI UPDATES ---
         function updateUI() {
             // Header
@@ -679,9 +713,8 @@
             // XP & Level
             updateLevel();
 
-            // Balance Calculation (Total Income - Total Expense for selected month)
+            // Balance Calculation
             const currentMonthISO = new Date().toISOString().slice(0, 7); // YYYY-MM
-            
             let monthIncome = 0;
             let monthExpense = 0;
             
@@ -692,7 +725,6 @@
                 }
             });
 
-            // Badge Check for Rich Kid
             if (monthIncome > 10000000) unlockBadge('rich_kid');
 
             const totalBalance = monthIncome - monthExpense;
@@ -700,13 +732,16 @@
             if(totalBalance < 0) document.getElementById('total-balance').classList.replace('text-gradient', 'text-red-400');
             else document.getElementById('total-balance').classList.replace('text-red-400', 'text-gradient');
             
-            // Budget Ring Logic (Only Expenses count towards budget)
+            // Budget Ring Logic
             const budgetRing = document.getElementById('home-budget-ring');
             const statusBadge = document.getElementById('monthly-status-badge');
             
-            if (state.monthlyBudget > 0) {
-                const percent = Math.min((monthExpense / state.monthlyBudget) * 100, 100);
-                const displayPercent = Math.round((monthExpense / state.monthlyBudget) * 100);
+            // USE DYNAMIC BUDGET HERE
+            const currentBudgetLimit = getTotalBudget();
+
+            if (currentBudgetLimit > 0) {
+                const percent = Math.min((monthExpense / currentBudgetLimit) * 100, 100);
+                const displayPercent = Math.round((monthExpense / currentBudgetLimit) * 100);
                 
                 document.getElementById('budget-percent').textContent = displayPercent + "%";
                 
@@ -718,7 +753,7 @@
                 
                 if(percent < 50) { 
                     statusBadge.innerHTML = '<span>🛡️ Aman</span>'; statusBadge.className = 'inline-flex px-2 py-1 rounded-lg text-[10px] font-bold items-center gap-1 bg-green-500/20 text-green-500';
-                    if (percent < 50 && state.monthlyBudget > 100000) unlockBadge('saver'); 
+                    if (percent < 50 && currentBudgetLimit > 100000) unlockBadge('saver'); 
                 }
                 else if(percent < 90) { statusBadge.innerHTML = '<span>⚠️ Hati-hati</span>'; statusBadge.className = 'inline-flex px-2 py-1 rounded-lg text-[10px] font-bold items-center gap-1 bg-yellow-500/20 text-yellow-500'; }
                 else { statusBadge.innerHTML = '<span>🚨 Boncos</span>'; statusBadge.className = 'inline-flex px-2 py-1 rounded-lg text-[10px] font-bold items-center gap-1 bg-red-500/20 text-red-500'; }
@@ -801,8 +836,9 @@
 
             const item = document.createElement('div');
             item.className = 'glass rounded-xl p-3 flex items-center gap-3 active:scale-95 transition-transform cursor-pointer group';
+            
             item.onclick = (e) => {
-                if(!e.target.closest('.delete-btn')) editItem(originalIndex);
+                if(!e.target.closest('button')) editItem(originalIndex);
             };
 
             item.innerHTML = `
@@ -818,7 +854,11 @@
                     <p class="font-bold text-sm ${amountColor}">${prefix} ${formatRupiahCompact(t.amount)}</p>
                     ${!isIncome ? `<span class="text-[10px] ${t.mood === 'guilty' ? 'text-red-500' : t.mood === 'want' ? 'text-yellow-500' : 'text-green-500'} font-bold">${t.mood || 'need'}</span>` : ''}
                 </div>
-                ${allowDelete ? `<button class="delete-btn opacity-0 group-hover:opacity-100 transition p-2 text-xs text-red-500 hover:bg-red-500/10 rounded-lg ml-1" onclick="deleteItem(${originalIndex})">✕</button>` : ''}
+                ${allowDelete ? `
+                <div class="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <button class="p-2 text-xs text-blue-400 hover:bg-blue-500/10 rounded-lg" onclick="event.stopPropagation(); editItem(${originalIndex})" title="Edit">✏️</button>
+                     <button class="delete-btn p-2 text-xs text-red-500 hover:bg-red-500/10 rounded-lg" onclick="event.stopPropagation(); deleteItem(${originalIndex})" title="Hapus">✕</button>
+                </div>` : ''}
             `;
             container.appendChild(item);
         }
@@ -843,7 +883,6 @@
         }
 
         function renderStatsView() {
-            // Stats focus on Expense
             const chartContainer = document.getElementById('weekly-chart');
             const daysContainer = document.getElementById('weekly-days');
             const catList = document.getElementById('stats-category-list');
@@ -880,10 +919,12 @@
             // Gen-Z Insight Logic
             const totalSpent = state.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
             let insight = "Data kurang banyak nih, jajan lagi dong!";
+            const currentBudgetLimit = getTotalBudget();
+
             if (totalSpent > 0) {
-                 if (state.monthlyBudget > 0 && totalSpent > state.monthlyBudget) {
+                 if (currentBudgetLimit > 0 && totalSpent > currentBudgetLimit) {
                      insight = "🚨 WADUH! Dompet kritis, mending puasa senin-kamis dulu deh.";
-                 } else if (state.monthlyBudget > 0 && totalSpent < state.monthlyBudget * 0.5) {
+                 } else if (currentBudgetLimit > 0 && totalSpent < currentBudgetLimit * 0.5) {
                      insight = "🔥 Mode Irit: ON. Lo keren banget, calon sultan masa depan!";
                  } else {
                      const totals = {};
@@ -902,13 +943,11 @@
             const totals = {};
             state.transactions.forEach(t => { if(t.type === 'expense') totals[t.category] = (totals[t.category] || 0) + t.amount; });
             const sorted = Object.keys(totals).sort((a,b) => totals[b] - totals[a]);
-            
-            // Show all expense categories even if 0
             state.categories.forEach(c => { if(c.type === 'expense' && !sorted.includes(c.id)) sorted.push(c.id); });
 
             sorted.forEach(catId => {
                 const catObj = state.categories.find(c => c.id === catId);
-                if (!catObj) return; // Skip if income category accident
+                if (!catObj) return; 
                 
                 const amount = totals[catId] || 0;
                 
@@ -929,7 +968,9 @@
 
                 const item = document.createElement('div');
                 item.className = 'glass p-3 rounded-xl cursor-pointer active:scale-95 transition';
-                item.onclick = () => setCategoryBudget(catId);
+                // OPEN NEW MODAL HERE
+                item.onclick = () => openCategoryBudgetModal(catId);
+                
                 item.innerHTML = `
                     <div class="flex justify-between items-center mb-1">
                         <div class="flex items-center gap-2">
@@ -956,19 +997,33 @@
             renderPieChart();
         }
 
-        function setCategoryBudget(catId) {
+        // --- NEW CATEGORY BUDGET MODAL LOGIC ---
+        function openCategoryBudgetModal(catId) {
+            const cat = state.categories.find(c => c.id === catId);
+            if (!cat) return;
+            document.getElementById('cat-budget-id').value = catId;
+            document.getElementById('cat-budget-title').textContent = `Atur Limit ${cat.label} ${cat.icon}`;
+            document.getElementById('cat-budget-input').value = cat.budget || '';
+            document.getElementById('category-budget-modal').classList.remove('hidden');
+        }
+
+        function closeCategoryBudgetModal() {
+            document.getElementById('category-budget-modal').classList.add('hidden');
+        }
+
+        function handleCategoryBudgetSubmit(e) {
+            e.preventDefault();
+            const catId = document.getElementById('cat-budget-id').value;
+            const val = parseFloat(document.getElementById('cat-budget-input').value);
+            
             const catIndex = state.categories.findIndex(c => c.id === catId);
-            if (catIndex === -1) return;
-            const current = state.categories[catIndex].budget || 0;
-            const input = prompt(`Set Budget Bulanan untuk ${state.categories[catIndex].label} (0 untuk unlimited):`, current);
-            if (input !== null) {
-                const val = parseFloat(input);
-                if (!isNaN(val)) {
-                    state.categories[catIndex].budget = val;
-                    saveData();
-                    renderStatsView(); 
-                    showToast(`Budget ${state.categories[catIndex].label} diupdate!`);
-                }
+            if (catIndex !== -1) {
+                state.categories[catIndex].budget = isNaN(val) ? 0 : val;
+                saveData();
+                renderStatsView();
+                updateUI(); // To update Home Budget Ring
+                closeCategoryBudgetModal();
+                showToast(`Limit updated! 🎯`);
             }
         }
 
@@ -1018,7 +1073,7 @@
                 el.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <h3 class="font-bold flex items-center gap-2">${g.title} ${isCompleted ? '✅' : ''}</h3>
-                        <button onclick="deleteGoal(${index})" class="opacity-30 hover:opacity-100 hover:text-red-500 text-xs font-bold">Hapus</button>
+                        <button onclick="deleteGoal(${index})" class="p-2 bg-black/5 rounded-full hover:bg-red-500/10 hover:text-red-500 transition text-xs font-bold">✕</button>
                     </div>
                     <div class="flex justify-between text-xs opacity-60 mb-1">
                         <span>${formatRupiahCompact(g.current)}</span>
